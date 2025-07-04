@@ -1,10 +1,15 @@
 import openai
 import json
 import re
+import logging
 from typing import Dict, Any
 from fastapi import HTTPException
 from config import settings
-from models import AnalysisResponse, Finding
+from models import AnalysisResponse, Finding, Recommendation
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class OpenAIService:
@@ -12,40 +17,32 @@ class OpenAIService:
         if not settings.OPENAI_API_KEY:
             raise ValueError("OPENAI_API_KEY no está configurada en las variables de entorno")
         
-        self.client = openai.OpenAI(
-            api_key=settings.OPENAI_API_KEY,
-            base_url=settings.OPENAI_BASE_URL
-        )
+        # Initialize client (use default endpoint)
+        self.client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
         self.model = settings.OPENAI_MODEL
     
-    def analyze_accounting_data(self, excel_data: str, custom_prompt: str = None) -> AnalysisResponse:
+    def test_connection(self) -> bool:
+        """Test the OpenAI API connection"""
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": "Responde con: 'Conexión exitosa'"}],
+                max_tokens=10
+            )
+            message_content = response.choices[0].message.content
+            if message_content is None:
+                return False
+            response_text = message_content.strip()
+            return "exitosa" in response_text.lower()
+        except Exception as e:
+            logger.error(f"Error testing OpenAI connection: {e}")
+            return False
+    
+    def analyze_accounting_data(self, excel_data: str, custom_prompt: str = "") -> AnalysisResponse:
         """Send accounting data to OpenAI for analysis"""
         try:
-            # Prepare the prompt
-            system_prompt = custom_prompt if custom_prompt else settings.DEFAULT_PROMPT
-            
-            # Combine system prompt with data
-            full_prompt = f"{system_prompt}\n\n--- DATOS CONTABLES ---\n{excel_data}"
-            
-            # Add JSON format instruction
-            json_instruction = """
-
-IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido con la siguiente estructura:
-{
-    "summary": "Resumen general del análisis",
-    "findings": [
-        {
-            "sheet": "Nombre de la hoja",
-            "row": número_de_fila_o_null,
-            "description": "Descripción detallada del hallazgo"
-        }
-    ],
-    "recommendations": "Recomendaciones para resolver los problemas encontrados"
-}
-
-NO incluyas texto adicional fuera del JSON. Solo responde con el JSON."""
-            
-            full_prompt += json_instruction
+            # Create the analysis prompt
+            prompt = self._create_analysis_prompt(excel_data, custom_prompt or "")
             
             # Make the API call
             response = self.client.chat.completions.create(
@@ -53,90 +50,189 @@ NO incluyas texto adicional fuera del JSON. Solo responde con el JSON."""
                 messages=[
                     {
                         "role": "user",
-                        "content": full_prompt
+                        "content": prompt
                     }
                 ],
-                temperature=0.3,
-                max_tokens=2000
+                temperature=0.2,
+                max_tokens=2048
             )
             
             # Extract the response content
-            response_content = response.choices[0].message.content.strip()
+            message_content = response.choices[0].message.content
+            if message_content is None:
+                raise ValueError("OpenAI response content is None")
+            response_content = message_content.strip()
             
-            # Parse the JSON response
-            try:
-                analysis_data = json.loads(response_content)
-                return self._parse_analysis_response(analysis_data)
-            except json.JSONDecodeError:
-                # If JSON parsing fails, try to extract JSON from the response
-                json_match = re.search(r'\{.*\}', response_content, re.DOTALL)
-                if json_match:
-                    try:
-                        analysis_data = json.loads(json_match.group())
-                        return self._parse_analysis_response(analysis_data)
-                    except json.JSONDecodeError:
-                        pass
-                
-                # If still can't parse, create a fallback response
-                return AnalysisResponse(
-                    summary="Análisis completado, pero hubo un problema con el formato de respuesta.",
-                    findings=[
-                        Finding(
-                            sheet="General",
-                            row=None,
-                            description=f"Respuesta del análisis: {response_content[:500]}..."
-                        )
-                    ],
-                    recommendations="Revisar manualmente la respuesta completa del análisis."
-                )
-        
+            # Parse the response
+            analysis_result = self._parse_openai_response(response_content)
+            
+            logger.info(f"Analysis completed successfully with {len(analysis_result.findings)} findings")
+            return analysis_result
+            
         except openai.APIError as e:
-            raise HTTPException(
-                status_code=503,
-                detail=f"Error en la API de OpenAI: {str(e)}"
+            logger.error(f"OpenAI API error: {e}")
+            return AnalysisResponse(
+                success=False,
+                error=f"Error en la API de OpenAI: {str(e)}",
+                findings=[],
+                recommendations=[],
+                summary="Error al procesar el análisis",
+                metadata={
+                    "provider": "openai",
+                    "model": self.model,
+                    "error": str(e)
+                }
             )
         except Exception as e:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Error al procesar la respuesta de OpenAI: {str(e)}"
+            logger.error(f"Error analyzing data with OpenAI: {e}")
+            return AnalysisResponse(
+                success=False,
+                error=f"Error al procesar la respuesta de OpenAI: {str(e)}",
+                findings=[],
+                recommendations=[],
+                summary="Error al procesar el análisis",
+                metadata={
+                    "provider": "openai",
+                    "model": self.model,
+                    "error": str(e)
+                }
             )
     
-    def _parse_analysis_response(self, analysis_data: Dict[str, Any]) -> AnalysisResponse:
-        """Parse the analysis response from OpenAI into structured format"""
+    def _create_analysis_prompt(self, excel_data: str, custom_prompt: str = "") -> str:
+        """Create the analysis prompt for OpenAI"""
+        
+        base_prompt = f"""
+        Eres un experto contador y auditor especializado en análisis de cuadres contables.
+        
+        Analiza los siguientes datos de Excel y detecta posibles errores en cuadres contables:
+        
+        DATOS DEL ARCHIVO:
+        {excel_data}
+        
+        INSTRUCCIONES:
+        1. Busca inconsistencias en sumas, balances y cuadres
+        2. Identifica errores de cálculo o fórmulas
+        3. Detecta valores faltantes o anómalos
+        4. Revisa la coherencia entre diferentes hojas o tablas
+        5. Verifica que los debitos y créditos cuadren
+        
+        {'INSTRUCCIONES ADICIONALES: ' + custom_prompt if custom_prompt else ''}
+        
+        IMPORTANTE: Responde ÚNICAMENTE con un JSON válido en el siguiente formato:
+        {{
+            "success": true,
+            "findings": [
+                {{
+                    "type": "error|warning|info",
+                    "title": "Título del hallazgo",
+                    "description": "Descripción detallada",
+                    "location": "Ubicación en el archivo",
+                    "severity": "high|medium|low",
+                    "suggested_fix": "Sugerencia de corrección"
+                }}
+            ],
+            "recommendations": [
+                {{
+                    "title": "Título de recomendación",
+                    "description": "Descripción de la recomendación",
+                    "priority": "high|medium|low",
+                    "category": "calculation|format|process|validation"
+                }}
+            ],
+            "summary": "Resumen ejecutivo del análisis",
+            "metadata": {{
+                "total_findings": 0,
+                "critical_issues": 0,
+                "sheets_analyzed": 0
+            }}
+        }}
+        """
+        
+        return base_prompt
+    
+    def _parse_openai_response(self, response_text: str) -> AnalysisResponse:
+        """Parse OpenAI response into structured format"""
         try:
-            # Extract findings
-            findings = []
-            if 'findings' in analysis_data and isinstance(analysis_data['findings'], list):
-                for finding_data in analysis_data['findings']:
-                    if isinstance(finding_data, dict):
-                        finding = Finding(
-                            sheet=finding_data.get('sheet', 'General'),
-                            row=finding_data.get('row'),
-                            description=finding_data.get('description', 'No description provided')
-                        )
-                        findings.append(finding)
+            # Clean response text
+            response_text = response_text.strip()
             
-            # Create the response object
+            # Remove markdown code blocks if present
+            if response_text.startswith("```json"):
+                response_text = response_text[7:]
+            if response_text.startswith("```"):
+                response_text = response_text[3:]
+            if response_text.endswith("```"):
+                response_text = response_text[:-3]
+            
+            response_text = response_text.strip()
+            
+            # Parse JSON
+            data = json.loads(response_text)
+            
+            # Convert to structured response
+            findings = []
+            for finding_data in data.get("findings", []):
+                finding = Finding(
+                    type=finding_data.get("type", "info"),
+                    title=finding_data.get("title", ""),
+                    description=finding_data.get("description", ""),
+                    location=finding_data.get("location", ""),
+                    severity=finding_data.get("severity", "medium"),
+                    suggested_fix=finding_data.get("suggested_fix", "")
+                )
+                findings.append(finding)
+            
+            recommendations = []
+            for rec_data in data.get("recommendations", []):
+                recommendation = Recommendation(
+                    title=rec_data.get("title", ""),
+                    description=rec_data.get("description", ""),
+                    priority=rec_data.get("priority", "medium"),
+                    category=rec_data.get("category", "general")
+                )
+                recommendations.append(recommendation)
+            
             return AnalysisResponse(
-                summary=analysis_data.get('summary', 'Análisis completado'),
+                success=data.get("success", True),
                 findings=findings,
-                recommendations=analysis_data.get('recommendations', 'No se proporcionaron recomendaciones específicas')
+                recommendations=recommendations,
+                summary=data.get("summary", "Análisis completado"),
+                metadata={
+                    "provider": "openai",
+                    "model": self.model,
+                    **data.get("metadata", {})
+                }
+            )
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"Error parsing OpenAI JSON response: {e}")
+            logger.error(f"Response text: {response_text}")
+            
+            # Return fallback response
+            return AnalysisResponse(
+                success=False,
+                error="Error al parsear la respuesta de OpenAI",
+                findings=[],
+                recommendations=[],
+                summary="Error en el procesamiento de la respuesta",
+                metadata={
+                    "provider": "openai",
+                    "model": self.model,
+                    "parse_error": str(e)
+                }
             )
         
         except Exception as e:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Error al parsear la respuesta del análisis: {str(e)}"
-            )
-    
-    def test_connection(self) -> bool:
-        """Test the OpenAI API connection"""
-        try:
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[{"role": "user", "content": "Test"}],
-                max_tokens=5
-            )
-            return True
-        except Exception:
-            return False 
+            logger.error(f"Unexpected error parsing OpenAI response: {e}")
+            return AnalysisResponse(
+                success=False,
+                error=f"Error inesperado: {str(e)}",
+                findings=[],
+                recommendations=[],
+                summary="Error inesperado en el análisis",
+                metadata={
+                    "provider": "openai",
+                    "model": self.model,
+                    "error": str(e)
+                }
+            ) 

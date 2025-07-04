@@ -1,6 +1,6 @@
 # Proxy Contabilidad API
 
-Un backend inteligente en Python usando FastAPI que sirve como proxy para analizar archivos contables de Excel y detectar errores en cuadres contables usando OpenAI ChatGPT.
+Un backend inteligente en Python usando FastAPI que sirve como proxy para analizar archivos contables de Excel y detectar errores en cuadres contables usando OpenAI ChatGPT or Geminis.
 
 ## 🚀 Características
 
