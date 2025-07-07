@@ -1,0 +1,134 @@
+.App {
+  text-align: center;
+}
+
+.server-status {
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.server-status.healthy {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.server-status.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.server-status.degraded {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+.spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.drag-over {
+  background-color: #e3f2fd !important;
+  border-color: #2196f3 !important;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .container {
+    padding: 10px;
+  }
+  
+  .upload-section {
+    padding: 20px;
+  }
+  
+  .results {
+    padding: 20px;
+  }
+  
+  .header h1 {
+    font-size: 24px;
+  }
+}
+
+/* Mejoras para accesibilidad */
+.button:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+.file-input:focus-within {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* Animaciones suaves */
+.results {
+  animation: fadeIn 0.5s ease-in;
+}
+
+.finding {
+  animation: slideIn 0.3s ease-out;
+}
+
+.recommendation {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Estilos para la lista de archivos */
+.file-list {
+  max-height: 150px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+  background-color: #f8f9fa;
+}
+
+.file-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.file-list li {
+  padding: 5px 0;
+  border-bottom: 1px solid #eee;
+} 

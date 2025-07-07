@@ -147,7 +147,7 @@ class OpenAIService:
             }}
         }}
         """
-        
+
         return base_prompt
     
     def _parse_openai_response(self, response_text: str) -> AnalysisResponse:
