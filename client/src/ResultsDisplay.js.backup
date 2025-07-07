@@ -1,10 +1,6 @@
 import React from 'react';
-import { useState } from 'react';
-import ChatComponent from './ChatComponent';
 
 const ResultsDisplay = ({ results, error }) => {
-  const [showChat, setShowChat] = useState(false);
-
   if (error) {
     return (
       <div className="results">
@@ -76,26 +72,7 @@ const ResultsDisplay = ({ results, error }) => {
 
   return (
     <div className="results">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h2>Resultados del Análisis</h2>
-        {results.session_id && (
-          <button 
-            onClick={() => setShowChat(!showChat)}
-            className="button"
-            style={{ backgroundColor: '#28a745' }}
-          >
-            {showChat ? '🔒 Cerrar Chat' : '💬 Chat IA'}
-          </button>
-        )}
-      </div>
-      
-      {/* Chat Component */}
-      {showChat && results.session_id && (
-        <ChatComponent 
-          sessionId={results.session_id} 
-          onClose={() => setShowChat(false)}
-        />
-      )}
+      <h2>Resultados del Análisis</h2>
       
       {/* Resumen */}
       <div style={{ marginBottom: '30px' }}>
@@ -233,4 +210,4 @@ const ResultsDisplay = ({ results, error }) => {
   );
 };
 
-export default ResultsDisplay;
+export default ResultsDisplay; 
