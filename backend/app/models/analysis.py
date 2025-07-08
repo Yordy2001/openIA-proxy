@@ -1,5 +1,6 @@
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
+from .base import BaseResponse
 
 
 class Finding(BaseModel):
@@ -22,22 +23,15 @@ class Recommendation(BaseModel):
     category: str  # "calculation", "format", "process", "validation"
 
 
-class AnalysisResponse(BaseModel):
+class AnalysisResponse(BaseResponse):
     """Model for analysis response"""
-    success: bool = True
     summary: str
     findings: List[Finding]
     recommendations: List[Recommendation]
-    error: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
+    session_id: Optional[str] = None  # Add session_id for chat context
 
 
 class AnalysisRequest(BaseModel):
     """Model for analysis request"""
-    prompt: Optional[str] = None
-
-
-class ErrorResponse(BaseModel):
-    """Model for error responses"""
-    error: str
-    detail: Optional[str] = None 
+    prompt: Optional[str] = None 
