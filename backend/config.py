@@ -5,17 +5,10 @@ load_dotenv()
 
 
 class Settings:
-    # Provider selection
-    AI_PROVIDER: str = os.getenv("AI_PROVIDER", "openai")  # openai, gemini
-    
     # OpenAI Configuration
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
     OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")  # More economical for testing
     OPENAI_BASE_URL: str = os.getenv("OPENAI_BASE_URL", "")  # Empty by default
-    
-    # Gemini Configuration (Free Tier)
-    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
-    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")  # More stable model
     
     # File Configuration
     MAX_FILE_SIZE: int = int(os.getenv("MAX_FILE_SIZE", "10485760"))  # 10MB

@@ -2,7 +2,6 @@ from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from typing import List, Optional
-import asyncio
 from contextlib import asynccontextmanager
 
 from models import AnalysisResponse, ErrorResponse
@@ -10,7 +9,6 @@ from chat_models import ChatRequest, ChatResponse, SessionListResponse, ChatMess
 from session_service import session_service
 from excel_service import ExcelProcessor
 from openai_service import OpenAIService
-from gemini_service import GeminiService
 from config import settings
 
 
@@ -24,27 +22,22 @@ async def lifespan(app: FastAPI):
     """Lifespan events for the application"""
     global ai_service
     try:
-        # Initialize AI service based on provider
-        if settings.AI_PROVIDER == "gemini":
-            if not settings.GEMINI_API_KEY:
-                raise ValueError("GEMINI_API_KEY no está configurada")
-            ai_service = GeminiService(settings.GEMINI_API_KEY, settings.GEMINI_MODEL)
-            print(f"🔮 Inicializando Gemini con modelo: {settings.GEMINI_MODEL}")
-        else:  # Default to OpenAI
-            if not settings.OPENAI_API_KEY:
-                raise ValueError("OPENAI_API_KEY no está configurada")
-            ai_service = OpenAIService()
-            print(f"🤖 Inicializando OpenAI con modelo: {settings.OPENAI_MODEL}")
+        # Initialize OpenAI service
+        if not settings.OPENAI_API_KEY:
+            raise ValueError("OPENAI_API_KEY no está configurada")
+        
+        ai_service = OpenAIService()
+        print(f"🤖 Inicializando OpenAI con modelo: {settings.OPENAI_MODEL}")
         
         # Test connection
         if ai_service.test_connection():
-            print(f"✅ Conexión con {settings.AI_PROVIDER} establecida correctamente")
+            print("✅ Conexión con OpenAI establecida correctamente")
         else:
-            print(f"⚠️  Advertencia: No se pudo conectar con {settings.AI_PROVIDER}")
+            print("⚠️  Advertencia: No se pudo conectar con OpenAI")
         
         yield
     except Exception as e:
-        print(f"❌ Error al inicializar {settings.AI_PROVIDER}: {e}")
+        print(f"❌ Error al inicializar OpenAI: {e}")
         yield
     finally:
         print("🔄 Cerrando aplicación...")
@@ -73,7 +66,7 @@ def get_ai_service():
     if ai_service is None:
         raise HTTPException(
             status_code=503,
-            detail=f"Servicio de IA ({settings.AI_PROVIDER}) no está disponible. Verifique la configuración."
+            detail="Servicio de IA no está disponible. Verifique la configuración."
         )
     return ai_service
 
@@ -84,7 +77,8 @@ async def root():
     return {
         "message": "Proxy Contabilidad API está funcionando correctamente",
         "version": "1.0.0",
-        "ai_provider": settings.AI_PROVIDER,        "endpoints": {
+        "ai_provider": "openai",
+        "endpoints": {
             "analyze": "/analyze",
             "chat": "/chat",
             "sessions": "/sessions",
@@ -99,7 +93,7 @@ async def health_check():
     """Detailed health check"""
     health_status = {
         "status": "healthy",
-        "ai_provider": settings.AI_PROVIDER,
+        "ai_provider": "openai",
         "services": {
             "excel_processor": "available",
             "ai_service": "unknown"
@@ -107,14 +101,9 @@ async def health_check():
         "configuration": {
             "max_file_size": f"{settings.MAX_FILE_SIZE / (1024*1024):.1f}MB",
             "allowed_extensions": list(settings.ALLOWED_EXTENSIONS),
+            "model": settings.OPENAI_MODEL
         }
     }
-    
-    # Add provider-specific config
-    if settings.AI_PROVIDER == "openai":
-        health_status["configuration"]["model"] = settings.OPENAI_MODEL
-    elif settings.AI_PROVIDER == "gemini":
-        health_status["configuration"]["model"] = settings.GEMINI_MODEL
     
     # Test AI service connection
     try:
@@ -221,8 +210,6 @@ async def analyze_accounting_files(
             status_code=500,
             detail=f"Error interno del servidor: {str(e)}"
         )
-
-
 
 
 @app.post("/chat", response_model=ChatResponse, tags=["Chat"])
