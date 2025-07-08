@@ -2,10 +2,10 @@ import openai
 import json
 import re
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from fastapi import HTTPException
-from config import settings
-from models import AnalysisResponse, Finding, Recommendation
+from app.core.config import settings
+from app.models.analysis import AnalysisResponse, Finding, Recommendation
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -17,7 +17,7 @@ class OpenAIService:
         if not settings.OPENAI_API_KEY:
             raise ValueError("OPENAI_API_KEY no está configurada en las variables de entorno")
         
-        # Initialize client (use default endpoint)
+        # Initialize client
         self.client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
         self.model = settings.OPENAI_MODEL
     
@@ -235,4 +235,54 @@ class OpenAIService:
                     "model": self.model,
                     "error": str(e)
                 }
-            ) 
+            )
+    
+    def chat_with_context(self, conversation_context: str, user_message: str) -> str:
+        """Chat with user using the analysis context"""
+        try:
+            # Create the chat prompt
+            prompt = f"""
+            Eres un experto contador y auditor especializado en análisis de cuadres contables.
+            
+            CONTEXTO DEL ANÁLISIS PREVIO:
+            {conversation_context}
+            
+            INSTRUCCIONES:
+            - Responde a la pregunta del usuario basándote en el análisis previo
+            - Sé específico y usa la información del análisis
+            - Si la pregunta no está relacionada con el análisis, redirige al usuario
+            - Mantén un tono profesional pero amigable
+            - Proporciona explicaciones claras y detalladas
+            
+            PREGUNTA DEL USUARIO:
+            {user_message}
+            
+            RESPUESTA:
+            """
+            
+            # Make the API call
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                temperature=0.3,
+                max_tokens=1024
+            )
+            
+            # Extract the response content
+            message_content = response.choices[0].message.content
+            if message_content is None:
+                raise ValueError("OpenAI response content is None")
+            
+            return message_content.strip()
+            
+        except openai.APIError as e:
+            logger.error(f"OpenAI API error in chat: {e}")
+            return f"Lo siento, ocurrió un error al procesar tu pregunta: {str(e)}"
+        except Exception as e:
+            logger.error(f"Error in chat with OpenAI: {e}")
+            return f"Lo siento, ocurrió un error inesperado: {str(e)}"
