@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:7000';
+console.log(process.env.REACT_APP_API_URL);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -147,6 +148,106 @@ export const apiService = {
     } catch (error) {
       console.error('Error deleting session:', error);
       throw error;
+    }
+  },
+
+  /**
+   * Extraer datos estructurados de un archivo Excel
+   * @param {File} file - Archivo Excel
+   */
+  async extractExcelData(file) {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await api.post('/extract', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error('Error extracting Excel data:', error);
+      
+      if (error.response) {
+        const errorData = error.response.data;
+        throw new Error(errorData.detail || errorData.error || 'Error del servidor');
+      } else if (error.request) {
+        throw new Error('No se pudo conectar con el servidor');
+      } else {
+        throw new Error('Error al enviar la petición');
+      }
+    }
+  },
+
+  /**
+   * Editar una celda específica
+   * @param {string} sheetName - Nombre de la hoja
+   * @param {number} row - Número de fila
+   * @param {string} column - Nombre de columna
+   * @param {any} value - Nuevo valor
+   */
+  async editCell(sheetName, row, column, value) {
+    try {
+      const response = await api.post('/edit', {
+        sheet_name: sheetName,
+        row: row,
+        column: column,
+        value: value
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error('Error editing cell:', error);
+      
+      if (error.response) {
+        const errorData = error.response.data;
+        throw new Error(errorData.detail || errorData.error || 'Error del servidor');
+      } else if (error.request) {
+        throw new Error('No se pudo conectar con el servidor');
+      } else {
+        throw new Error('Error al enviar la petición');
+      }
+    }
+  },
+
+  /**
+   * Descargar Excel modificado
+   * @param {string} filename - Nombre del archivo
+   * @param {Array} sheets - Datos de las hojas
+   */
+  async downloadExcel(filename, sheets) {
+    try {
+      const response = await api.post('/download', {
+        filename: filename,
+        sheets: sheets
+      }, {
+        responseType: 'blob'
+      });
+
+      // Crear URL para descarga
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      return { success: true, message: 'Archivo descargado exitosamente' };
+    } catch (error) {
+      console.error('Error downloading Excel:', error);
+      
+      if (error.response) {
+        const errorData = error.response.data;
+        throw new Error(errorData.detail || errorData.error || 'Error del servidor');
+      } else if (error.request) {
+        throw new Error('No se pudo conectar con el servidor');
+      } else {
+        throw new Error('Error al enviar la petición');
+      }
     }
   }
 };

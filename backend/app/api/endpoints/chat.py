@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.models.chat import ChatRequest, ChatResponse
+from chat_models import ChatMessage
 from app.services.session_service import session_service
 from app.dependencies import get_ai_service
 
@@ -28,45 +29,47 @@ async def chat_with_analysis(
                 detail="Sesión no encontrada"
             )
         
-        # Create conversation context
-        context_parts = [
-            f"ANÁLISIS PREVIO: {session.analysis_result.get('summary', 'No disponible')}",
-            f"ARCHIVOS ANALIZADOS: {', '.join(session.file_names)}",
-            "HALLAZGOS PRINCIPALES:",
-        ]
+        # Add user message to conversation
+        user_message = ChatMessage(
+            role="user",
+            content=chat_request.message
+        )
+        session_service.add_message(chat_request.session_id, user_message)
         
-        # Add findings to context
-        findings = session.analysis_result.get('findings', [])
-        for finding in findings[:5]:  # Limit to top 5 findings
-            context_parts.append(f"- {finding.get('title', 'Sin título')}: {finding.get('description', 'Sin descripción')}")
-        
-        # Add conversation history
-        context_parts.append("CONVERSACIÓN PREVIA:")
-        for msg in session.conversation_history[-5:]:  # Last 5 messages
-            context_parts.append(f"{msg.role}: {msg.content}")
-        
-        conversation_context = "\n".join(context_parts)
+        # Get conversation context using the improved method
+        context = session_service.get_conversation_context(chat_request.session_id)
         
         # Get AI response
         ai_response = ai_svc.chat_with_context(
-            conversation_context,
+            context,
             chat_request.message
         )
         
-        # Update session with new messages
-        session_service.add_message_to_session(
-            chat_request.session_id,
-            chat_request.message,
-            ai_response
+        # Add AI response to conversation
+        ai_message = ChatMessage(
+            role="assistant",
+            content=ai_response
         )
+        session_service.add_message(chat_request.session_id, ai_message)
         
-        # Get updated session
+        # Get updated session for response
         updated_session = session_service.get_session(chat_request.session_id)
         
+        # Convert messages to expected format or provide empty list
+        conversation_history = []
+        if updated_session and updated_session.conversation_history:
+            # Convert to the expected format
+            from app.models.chat import ChatMessage as AppChatMessage
+            conversation_history = [
+                AppChatMessage(role=msg.role, content=msg.content)
+                for msg in updated_session.conversation_history
+            ]
+        
+        # Return response
         return ChatResponse(
             response=ai_response,
             session_id=chat_request.session_id,
-            conversation_history=updated_session.conversation_history
+            conversation_history=conversation_history
         )
         
     except HTTPException:

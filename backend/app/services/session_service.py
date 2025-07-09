@@ -53,37 +53,50 @@ class SessionService:
         if not session:
             return ""
         
-        # Build context with analysis results and conversation history
+        # Build context with Excel data, analysis results and conversation history
         context = f"""
-ANÁLISIS PREVIO:
-Archivos analizados: {', '.join(session.file_names)}
-Fecha del análisis: {session.created_at.strftime('%Y-%m-%d %H:%M:%S')}
+ARCHIVOS ANALIZADOS: {', '.join(session.file_names)}
+FECHA DEL ANÁLISIS: {session.created_at.strftime('%Y-%m-%d %H:%M:%S')}
 
-RESUMEN DEL ANÁLISIS:
+DATOS ORIGINALES DEL EXCEL:
+{session.excel_data.get('data', 'No disponible')}
+
+RESUMEN DEL ANÁLISIS REALIZADO:
 {session.analysis_result.get('summary', 'No disponible')}
 
-HALLAZGOS:
+HALLAZGOS ENCONTRADOS:
 """
         
-        # Add findings
+        # Add findings with more detail
         findings = session.analysis_result.get('findings', [])
-        for i, finding in enumerate(findings[:5]):  # Limit to first 5 findings
-            context += f"- {finding.get('title', 'Sin título')}: {finding.get('description', '')}\n"
+        for finding in findings:
+            context += f"- [{finding.get('type', 'info').upper()}] {finding.get('title', 'Sin título')}\n"
+            context += f"  Ubicación: {finding.get('location', 'No especificada')}\n"
+            context += f"  Descripción: {finding.get('description', 'Sin descripción')}\n"
+            context += f"  Severidad: {finding.get('severity', 'medium')}\n"
+            context += f"  Solución sugerida: {finding.get('suggested_fix', 'No especificada')}\n\n"
         
-        if len(findings) > 5:
-            context += f"... y {len(findings) - 5} hallazgos más.\n"
-        
-        context += "\nRECOMENDACIONES:\n"
+        context += "RECOMENDACIONES:\n"
         recommendations = session.analysis_result.get('recommendations', [])
-        for i, rec in enumerate(recommendations[:3]):  # Limit to first 3 recommendations
-            context += f"- {rec.get('title', 'Sin título')}: {rec.get('description', '')}\n"
+        for rec in recommendations:
+            context += f"- {rec.get('title', 'Sin título')} (Prioridad: {rec.get('priority', 'medium')})\n"
+            context += f"  {rec.get('description', 'Sin descripción')}\n\n"
         
-        if len(recommendations) > 3:
-            context += f"... y {len(recommendations) - 3} recomendaciones más.\n"
+        # Add metadata
+        metadata = session.analysis_result.get('metadata', {})
+        if metadata:
+            context += f"INFORMACIÓN ADICIONAL:\n"
+            context += f"- Total de hallazgos: {metadata.get('total_findings', 0)}\n"
+            context += f"- Problemas críticos: {metadata.get('critical_issues', 0)}\n"
+            context += f"- Hojas analizadas: {metadata.get('sheets_analyzed', 0)}\n"
+            if metadata.get('non_profitable_bancas'):
+                context += f"- Bancas no rentables: {', '.join(metadata.get('non_profitable_bancas', []))}\n"
+            if metadata.get('possible_config_errors'):
+                context += f"- Posibles errores de configuración: {', '.join(metadata.get('possible_config_errors', []))}\n"
         
-        # Add conversation history
-        context += "\nHISTORIAL DE CONVERSACIÓN:\n"
-        for msg in session.conversation_history[-10:]:  # Last 10 messages
+        # Add recent conversation history
+        context += "\nHISTORIAL DE CONVERSACIÓN RECIENTE:\n"
+        for msg in session.conversation_history[-5:]:  # Last 5 messages
             role = "Usuario" if msg.role == "user" else "Asistente"
             context += f"{role}: {msg.content}\n"
         

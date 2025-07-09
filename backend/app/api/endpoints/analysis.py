@@ -3,6 +3,7 @@ from typing import List, Optional
 from app.core.config import settings
 from app.models.analysis import AnalysisResponse
 from app.services.excel_service import ExcelProcessor
+from app.services.session_service import session_service
 from app.dependencies import get_ai_service
 
 router = APIRouter()
@@ -81,6 +82,17 @@ async def analyze_accounting_files(
             excel_data,
             prompt or ""
         )
+        
+        # Create session for chat (ESTO ES LO QUE FALTABA!)
+        file_names = [f["filename"] for f in processed_files]
+        session_id = session_service.create_session(
+            analysis_result=analysis_result.dict(),
+            excel_data={"data": excel_data, "files": file_names},
+            file_names=file_names
+        )
+        
+        # Add session_id to response
+        analysis_result.session_id = session_id
         
         return analysis_result
         

@@ -175,16 +175,57 @@ const ResultsDisplay = ({ results, error }) => {
         </div>
       )}
 
-      {/* Metadata */}
+      {/* Metadata con información específica */}
       {results.metadata && Object.keys(results.metadata).length > 0 && (
         <div style={{ marginBottom: '30px' }}>
           <h3>📈 Información Adicional</h3>
-          <div style={{ padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
-            {Object.entries(results.metadata).map(([key, value]) => (
-              <div key={key} style={{ marginBottom: '5px' }}>
-                <strong>{key}:</strong> {typeof value === 'object' ? JSON.stringify(value) : value}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+            
+            {/* Estadísticas generales */}
+            <div style={{ padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+              <h4 style={{ margin: '0 0 15px 0', color: '#495057' }}>📊 Estadísticas Generales</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div><strong>Total de hallazgos:</strong> {results.metadata.total_findings || 0}</div>
+                <div><strong>Problemas críticos:</strong> {results.metadata.critical_issues || 0}</div>
+                <div><strong>Hojas analizadas:</strong> {results.metadata.sheets_analyzed || 0}</div>
               </div>
-            ))}
+            </div>
+
+            {/* Bancas no rentables */}
+            {results.metadata.non_profitable_bancas && results.metadata.non_profitable_bancas.length > 0 && (
+              <div style={{ padding: '15px', backgroundColor: '#fff3cd', borderRadius: '4px', border: '1px solid #ffeaa7' }}>
+                <h4 style={{ margin: '0 0 15px 0', color: '#856404' }}>⚠️ Bancas No Rentables</h4>
+                <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                  {results.metadata.non_profitable_bancas.map((banca, index) => (
+                    <li key={index} style={{ color: '#856404', fontWeight: 'bold' }}>{banca}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Posibles errores de configuración */}
+            {results.metadata.possible_config_errors && results.metadata.possible_config_errors.length > 0 && (
+              <div style={{ padding: '15px', backgroundColor: '#f8d7da', borderRadius: '4px', border: '1px solid #f5c6cb' }}>
+                <h4 style={{ margin: '0 0 15px 0', color: '#721c24' }}>🔧 Posibles Errores de Configuración</h4>
+                <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                  {results.metadata.possible_config_errors.map((hoja, index) => (
+                    <li key={index} style={{ color: '#721c24', fontWeight: 'bold' }}>{hoja}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Información técnica */}
+            <div style={{ padding: '15px', backgroundColor: '#e3f2fd', borderRadius: '4px' }}>
+              <h4 style={{ margin: '0 0 15px 0', color: '#1565c0' }}>🔧 Información Técnica</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div><strong>Proveedor:</strong> {results.metadata.provider || 'No especificado'}</div>
+                <div><strong>Modelo:</strong> {results.metadata.model || 'No especificado'}</div>
+                {results.session_id && (
+                  <div><strong>Session ID:</strong> <code style={{ fontSize: '0.8em' }}>{results.session_id}</code></div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}

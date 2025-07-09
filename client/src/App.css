@@ -1,5 +1,38 @@
 .App {
   text-align: center;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: white;
+  min-height: 100vh;
+  box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.header h1 {
+  margin: 0 0 10px 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.header p {
+  margin: 0;
+  font-size: 1.1rem;
+  opacity: 0.9;
 }
 
 .server-status {
@@ -131,4 +164,305 @@
 .file-list li {
   padding: 5px 0;
   border-bottom: 1px solid #eee;
-} 
+}
+
+/* Estilos para las pestañas */
+.tabs {
+  display: flex;
+  margin: 20px 0;
+  border-bottom: 2px solid #dee2e6;
+  justify-content: center;
+}
+
+.tab-button {
+  background: none;
+  border: none;
+  padding: 12px 24px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  color: #666;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s ease;
+  margin: 0 10px;
+}
+
+.tab-button:hover {
+  color: #007bff;
+  background-color: #f8f9fa;
+}
+
+.tab-button.active {
+  color: #007bff;
+  border-bottom-color: #007bff;
+  background-color: #f8f9fa;
+}
+
+.tab-content {
+  margin-top: 20px;
+}
+
+.tab-pane {
+  animation: fadeIn 0.3s ease-in;
+}
+
+/* Estilos para el extractor de Excel */
+.excel-extractor {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.extractor-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.extractor-header h2 {
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.extractor-header p {
+  color: #666;
+  font-size: 16px;
+}
+
+/* Estilos para la tabla Excel */
+.excel-table {
+  margin-top: 20px;
+}
+
+.excel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+}
+
+.excel-header h3 {
+  margin: 0;
+  color: #333;
+}
+
+.excel-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.sheet-tabs {
+  display: flex;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #dee2e6;
+  overflow-x: auto;
+}
+
+.sheet-tab {
+  background: none;
+  border: none;
+  padding: 12px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.sheet-tab:hover {
+  color: #007bff;
+  background-color: #f8f9fa;
+}
+
+.sheet-tab.active {
+  color: #007bff;
+  border-bottom-color: #007bff;
+  background-color: #f8f9fa;
+}
+
+.sheet-info {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #e3f2fd;
+  border-radius: 8px;
+  border-left: 4px solid #2196f3;
+}
+
+.sheet-info h4 {
+  margin: 0 0 10px 0;
+  color: #1976d2;
+}
+
+.sheet-info p {
+  margin: 0;
+  color: #666;
+}
+
+.table-container {
+  overflow-x: auto;
+  margin-bottom: 20px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.excel-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  background-color: white;
+}
+
+.excel-data-table th {
+  background-color: #f8f9fa;
+  padding: 12px 8px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 2px solid #dee2e6;
+  border-right: 1px solid #dee2e6;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.excel-data-table td {
+  border-bottom: 1px solid #dee2e6;
+  border-right: 1px solid #dee2e6;
+  vertical-align: top;
+}
+
+.excel-data-table tr:hover {
+  background-color: #f8f9fa;
+}
+
+.excel-data-table tbody tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.excel-data-table tbody tr:nth-child(even):hover {
+  background-color: #f0f0f0;
+}
+
+.table-instructions {
+  margin-top: 20px;
+  padding: 20px;
+  background-color: #fff3cd;
+  border-radius: 8px;
+  border-left: 4px solid #ffc107;
+}
+
+.table-instructions p {
+  margin: 0 0 10px 0;
+  color: #856404;
+  font-weight: 600;
+}
+
+.table-instructions ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #856404;
+}
+
+.table-instructions li {
+  margin-bottom: 5px;
+}
+
+/* Estilos para el botón */
+.button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.button:hover {
+  background-color: #0056b3;
+}
+
+.button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+/* Estilos para el área de subida de archivos */
+.upload-section {
+  margin: 20px 0;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.file-input {
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s ease;
+  background-color: white;
+}
+
+.file-input:hover {
+  border-color: #007bff;
+  background-color: #f8f9fa;
+}
+
+.textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 100px;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+/* Responsive design para la tabla */
+@media (max-width: 768px) {
+  .excel-header {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .excel-actions {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .sheet-tabs {
+    justify-content: flex-start;
+  }
+  
+  .excel-data-table {
+    font-size: 12px;
+  }
+  
+  .excel-data-table th,
+  .excel-data-table td {
+    padding: 8px 4px;
+  }
+  
+  .tabs {
+    flex-direction: column;
+  }
+  
+  .tab-button {
+    margin: 5px 0;
+  }
+}

@@ -1,9 +1,12 @@
 import pandas as pd
 import openpyxl
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Union
 import io
 import os
 from fastapi import HTTPException
+from models import ExcelStructuredData, ExcelSheetData
+from openpyxl.utils.dataframe import dataframe_to_rows
+from openpyxl.styles import Font, Alignment, Border, Side
 
 
 class ExcelProcessor:
@@ -28,8 +31,192 @@ class ExcelProcessor:
         
         return True
     
+    def extract_structured_data(self, file_content: bytes, filename: str) -> ExcelStructuredData:
+        """Extract structured data from Excel file for table display"""
+        try:
+            excel_file = pd.ExcelFile(io.BytesIO(file_content))
+            sheets = []
+            
+            for sheet_name in excel_file.sheet_names:
+                try:
+                    # Read the sheet with headers
+                    df = pd.read_excel(excel_file, sheet_name=sheet_name)
+                    
+                    # Clean column names
+                    df.columns = [str(col).strip() for col in df.columns]
+                    
+                    # Remove completely empty rows
+                    df = df.dropna(how='all')
+                    
+                    if df.empty:
+                        continue
+                    
+                    # Fill NaN values with empty strings for display
+                    df_display = df.fillna("")
+                    
+                    # Convert datetime columns to strings
+                    for col in df_display.columns:
+                        if df_display[col].dtype == 'datetime64[ns]':
+                            df_display[col] = df_display[col].astype(str)
+                    
+                    # Identify numeric columns
+                    numeric_columns = list(df.select_dtypes(include=['number']).columns)
+                    
+                    # Create sheet data
+                    sheet_data = ExcelSheetData(
+                        sheet_name=sheet_name,
+                        columns=list(df_display.columns),
+                        rows=df_display.to_dict('records'),
+                        shape=list(df_display.shape),
+                        numeric_columns=numeric_columns
+                    )
+                    
+                    sheets.append(sheet_data)
+                    
+                except Exception as e:
+                    print(f"Error processing sheet '{sheet_name}': {e}")
+                    continue
+            
+            return ExcelStructuredData(
+                filename=filename,
+                sheets=sheets,
+                metadata={
+                    "total_sheets": len(sheets),
+                    "processed_at": pd.Timestamp.now().isoformat()
+                }
+            )
+            
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error al procesar el archivo Excel: {str(e)}"
+            )
+    
+    def update_cell_data(self, structured_data: ExcelStructuredData, sheet_name: str, 
+                        row: int, column: str, value: Union[str, int, float, None]) -> ExcelStructuredData:
+        """Update a specific cell in the structured data"""
+        try:
+            # Find the sheet
+            sheet_index = None
+            for i, sheet in enumerate(structured_data.sheets):
+                if sheet.sheet_name == sheet_name:
+                    sheet_index = i
+                    break
+            
+            if sheet_index is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Hoja '{sheet_name}' no encontrada"
+                )
+            
+            # Update the cell
+            if row < len(structured_data.sheets[sheet_index].rows):
+                if column in structured_data.sheets[sheet_index].columns:
+                    # Convert value to appropriate type
+                    if isinstance(value, str) and value.strip() == "":
+                        value = None
+                    elif isinstance(value, str):
+                        # Try to convert to number if it's a numeric column
+                        if column in structured_data.sheets[sheet_index].numeric_columns:
+                            try:
+                                value = float(value) if '.' in value else int(value)
+                            except ValueError:
+                                pass  # Keep as string if conversion fails
+                    
+                    structured_data.sheets[sheet_index].rows[row][column] = value
+                else:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Columna '{column}' no encontrada"
+                    )
+            else:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Fila {row} no encontrada"
+                )
+            
+            return structured_data
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error al actualizar celda: {str(e)}"
+            )
+    
+    def export_to_excel(self, structured_data: ExcelStructuredData) -> bytes:
+        """Export structured data back to Excel bytes"""
+        try:
+            output = io.BytesIO()
+            
+            # Create a new workbook
+            wb = openpyxl.Workbook()
+            if wb.active is not None:
+                wb.remove(wb.active)  # Remove the default sheet
+            
+            for sheet in structured_data.sheets:
+                # Convert rows back to DataFrame
+                df = pd.DataFrame(sheet.rows, columns=sheet.columns)
+                
+                # Create worksheet
+                ws = wb.create_sheet(title=sheet.sheet_name)
+                
+                # Write headers
+                for col_idx, column in enumerate(df.columns, 1):
+                    cell = ws.cell(row=1, column=col_idx, value=column)
+                    cell.font = Font(bold=True)
+                    cell.alignment = Alignment(horizontal='center', vertical='center')
+                
+                # Write data
+                for row_idx, row in enumerate(df.to_dict('records'), 2):
+                    for col_idx, column in enumerate(df.columns, 1):
+                        value = row[column]
+                        # Handle None values
+                        if pd.isna(value):
+                            value = ""
+                        ws.cell(row=row_idx, column=col_idx, value=value)
+                
+                # Auto-adjust column widths
+                for column in ws.columns:
+                    max_length = 0
+                    column_letter = column[0].column_letter
+                    
+                    for cell in column:
+                        try:
+                            if len(str(cell.value)) > max_length:
+                                max_length = len(str(cell.value))
+                        except:
+                            pass
+                    
+                    adjusted_width = min(max_length + 2, 50)
+                    ws.column_dimensions[column_letter].width = adjusted_width
+                
+                # Add borders
+                thin_border = Border(
+                    left=Side(style='thin'),
+                    right=Side(style='thin'),
+                    top=Side(style='thin'),
+                    bottom=Side(style='thin')
+                )
+                
+                for row in ws.iter_rows():
+                    for cell in row:
+                        cell.border = thin_border
+            
+            # Save to BytesIO
+            wb.save(output)
+            output.seek(0)
+            return output.read()
+            
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error al exportar Excel: {str(e)}"
+            )
+    
     def extract_data_from_excel(self, file_content: bytes, filename: str) -> str:
-        """Extract and format data from Excel file"""
+        """Extract and format data from Excel file for AI analysis"""
         try:
             # Read Excel file
             excel_file = pd.ExcelFile(io.BytesIO(file_content))

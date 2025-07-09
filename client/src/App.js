@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import FileUpload from './FileUpload';
 import ResultsDisplay from './ResultsDisplay';
+import ExcelExtractor from './ExcelExtractor';
 import apiService from './apiService';
 import './App.css';
 
@@ -9,6 +10,7 @@ function App() {
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
   const [serverStatus, setServerStatus] = useState(null);
+  const [activeTab, setActiveTab] = useState('analysis');
 
   useEffect(() => {
     checkServerStatus();
@@ -70,28 +72,57 @@ function App() {
           )}
         </header>
 
-        {/* Componente de carga de archivos */}
-        <FileUpload onAnalyze={handleAnalyze} isLoading={isLoading} />
+        {/* Navegación por pestañas */}
+        <div className="tabs">
+          <button
+            className={`tab-button ${activeTab === 'analysis' ? 'active' : ''}`}
+            onClick={() => setActiveTab('analysis')}
+          >
+            🤖 Análisis IA
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'extractor' ? 'active' : ''}`}
+            onClick={() => setActiveTab('extractor')}
+          >
+            📊 Tabla Editable
+          </button>
+        </div>
 
-        {/* Indicador de carga */}
-        {isLoading && (
-          <div className="loading">
-            <div className="spinner"></div>
-            <p>Analizando archivos... Esto puede tomar unos minutos.</p>
-          </div>
-        )}
+        {/* Contenido de las pestañas */}
+        <div className="tab-content">
+          {activeTab === 'analysis' && (
+            <div className="tab-pane">
+              {/* Componente de carga de archivos */}
+              <FileUpload onAnalyze={handleAnalyze} isLoading={isLoading} />
 
-        {/* Resultados o errores */}
-        {(results || error) && (
-          <div>
-            <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-              <button onClick={handleReset} className="button">
-                🔄 Nuevo Análisis
-              </button>
+              {/* Indicador de carga */}
+              {isLoading && (
+                <div className="loading">
+                  <div className="spinner"></div>
+                  <p>Analizando archivos... Esto puede tomar unos minutos.</p>
+                </div>
+              )}
+
+              {/* Resultados o errores */}
+              {(results || error) && (
+                <div>
+                  <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+                    <button onClick={handleReset} className="button">
+                      🔄 Nuevo Análisis
+                    </button>
+                  </div>
+                  <ResultsDisplay results={results} error={error} />
+                </div>
+              )}
             </div>
-            <ResultsDisplay results={results} error={error} />
-          </div>
-        )}
+          )}
+
+          {activeTab === 'extractor' && (
+            <div className="tab-pane">
+              <ExcelExtractor />
+            </div>
+          )}
+        </div>
 
         {/* Footer */}
         <footer style={{ marginTop: '40px', textAlign: 'center', color: '#666' }}>

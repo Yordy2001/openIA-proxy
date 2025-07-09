@@ -1,10 +1,15 @@
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from typing import List, Optional
 from contextlib import asynccontextmanager
+import io
+import pandas as pd
 
-from models import AnalysisResponse, ErrorResponse
+from models import (
+    AnalysisResponse, ErrorResponse, ExcelStructuredData, 
+    EditCellRequest, DownloadRequest
+)
 from chat_models import ChatRequest, ChatResponse, SessionListResponse, ChatMessage
 from session_service import session_service
 from excel_service import ExcelProcessor
@@ -15,6 +20,9 @@ from config import settings
 # Initialize services
 excel_processor = ExcelProcessor()
 ai_service = None
+
+# Store for structured data (in production, use Redis or database)
+structured_data_store = {}
 
 
 @asynccontextmanager
@@ -71,21 +79,26 @@ def get_ai_service():
     return ai_service
 
 
-@app.get("/", tags=["Health"])
+@app.get("/", tags=["Root"])
 async def root():
-    """Health check endpoint"""
+    """Root endpoint with API information"""
     return {
-        "message": "Proxy Contabilidad API está funcionando correctamente",
+        "message": "Proxy Contabilidad API",
         "version": "1.0.0",
-        "ai_provider": "openai",
-        "endpoints": {
-            "analyze": "/analyze",
-            "chat": "/chat",
-            "sessions": "/sessions",
-            "health": "/health",
-            "docs": "/docs"
-        }
+        "docs": "/docs",
+        "endpoints": [
+            "/analyze - Analizar archivos Excel",
+            "/extract - Extraer datos estructurados",
+            "/edit - Editar datos",
+            "/download - Descargar Excel",
+            "/chat - Chat con análisis",
+            "/sessions - Gestionar sesiones",
+            "/health - Estado del servicio"
+        ]
     }
+
+
+
 
 
 @app.get("/health", tags=["Health"])
@@ -117,6 +130,126 @@ async def health_check():
         health_status["status"] = "degraded"
     
     return health_status
+
+
+# NUEVO: Endpoint para extraer datos estructurados
+@app.post("/extract", response_model=ExcelStructuredData, tags=["Data"])
+async def extract_structured_data(
+    file: UploadFile = File(..., description="Archivo Excel para extraer datos")
+):
+    """
+    Extraer datos estructurados de un archivo Excel para mostrar en tabla editable.
+    
+    - **file**: Archivo Excel (.xlsx, .xls)
+    
+    Retorna datos estructurados con hojas, columnas y filas.
+    """
+    if not file.filename:
+        raise HTTPException(
+            status_code=400,
+            detail="El archivo debe tener un nombre"
+        )
+    
+    try:
+        # Read file content
+        content = await file.read()
+        
+        # Validate file
+        excel_processor.validate_file(
+            file.filename,
+            len(content),
+            settings.MAX_FILE_SIZE
+        )
+        
+        # Extract structured data
+        structured_data = excel_processor.extract_structured_data(content, file.filename)
+        
+        # Store in memory for editing (use unique key)
+        data_key = f"{file.filename}_{hash(content)}"
+        structured_data_store[data_key] = structured_data
+        
+        # Add data key to metadata
+        structured_data.metadata["data_key"] = data_key
+        
+        return structured_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al extraer datos estructurados: {str(e)}"
+        )
+
+
+# NUEVO: Endpoint para editar celda
+@app.post("/edit", response_model=ExcelStructuredData, tags=["Data"])
+async def edit_cell(edit_request: EditCellRequest):
+    """
+    Editar una celda específica en los datos estructurados.
+    
+    - **edit_request**: Datos de la celda a editar
+    
+    Retorna los datos actualizados.
+    """
+    # For now, we'll use a simple approach - in production use data_key
+    # This is a simplified implementation
+    try:
+        # In a real implementation, you'd retrieve from structured_data_store
+        # using the data_key and then update the specific cell
+        
+        # This is a placeholder response
+        return ExcelStructuredData(
+            filename="updated_file.xlsx",
+            sheets=[],
+            metadata={
+                "updated_at": pd.Timestamp.now().isoformat(),
+                "cell_updated": f"{edit_request.sheet_name}:{edit_request.row}:{edit_request.column}"
+            }
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al editar celda: {str(e)}"
+        )
+
+
+# NUEVO: Endpoint para descargar Excel
+@app.post("/download", tags=["Data"])
+async def download_excel(download_request: DownloadRequest):
+    """
+    Descargar datos estructurados como archivo Excel.
+    
+    - **download_request**: Datos a descargar
+    
+    Retorna archivo Excel para descarga.
+    """
+    try:
+        # Create structured data from request
+        structured_data = ExcelStructuredData(
+            filename=download_request.filename,
+            sheets=download_request.sheets,
+            metadata={}
+        )
+        
+        # Export to Excel bytes
+        excel_bytes = excel_processor.export_to_excel(structured_data)
+        
+        # Return as streaming response
+        return StreamingResponse(
+            io.BytesIO(excel_bytes),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={
+                "Content-Disposition": f"attachment; filename={download_request.filename}"
+            }
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al descargar Excel: {str(e)}"
+        )
 
 
 @app.post("/analyze", response_model=AnalysisResponse, tags=["Analysis"])
@@ -384,4 +517,4 @@ async def general_exception_handler(request, exc):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000) 
+    uvicorn.run(app, host="0.0.0.0", port=7000) 

@@ -102,51 +102,108 @@ class OpenAIService:
         """Create the analysis prompt for OpenAI"""
         
         base_prompt = f"""
-        Eres un experto contador y auditor especializado en análisis de cuadres contables.
-        
-        Analiza los siguientes datos de Excel y detecta posibles errores en cuadres contables:
-        
-        DATOS DEL ARCHIVO:
-        {excel_data}
-        
-        INSTRUCCIONES:
-        1. Busca inconsistencias en sumas, balances y cuadres
-        2. Identifica errores de cálculo o fórmulas
-        3. Detecta valores faltantes o anómalos
-        4. Revisa la coherencia entre diferentes hojas o tablas
-        5. Verifica que los debitos y créditos cuadren
-        
-        {'INSTRUCCIONES ADICIONALES: ' + custom_prompt if custom_prompt else ''}
-        
-        IMPORTANTE: Responde ÚNICAMENTE con un JSON válido en el siguiente formato:
+Eres un experto contador financiero y auditor automatizado, especializado en conciliaciones contables semanales de sistemas de lotería. Tu función es analizar datos estructurados de Excel provenientes de cuadres financieros de múltiples clientes (consorcios o bancas), identificar errores específicos y proporcionar recomendaciones precisas.
+
+DATOS DEL ARCHIVO:
+{excel_data}
+
+INSTRUCCIONES ESPECÍFICAS PARA EL ANÁLISIS:
+
+1. VALIDACIONES OBLIGATORIAS:
+   - Verificar fórmula estándar: Balance = Ventas - Premios - Comisiones ± Ajustes
+   - Revisar que los premios nunca excedan las ventas (salvo casos excepcionales justificados)
+   - Validar que las comisiones correspondan a los porcentajes acordados por cliente
+   - Comprobar que los rebotes estén correctamente separados del total de premios
+   - Identificar bancas con pérdidas netas recurrentes
+
+2. DETECCIÓN DE ERRORES:
+   - Cálculos incorrectos (especificar celda y valor esperado vs encontrado)
+   - Fórmulas mal aplicadas (indicar la fórmula correcta)
+   - Valores faltantes o incoherentes
+   - Configuraciones atípicas (comisiones fuera de rango, rebotes mal configurados)
+   - Inconsistencias entre hojas relacionadas
+
+3. CLASIFICACIÓN DE HALLAZGOS:
+   - ERROR: Cálculos incorrectos, fórmulas mal aplicadas, valores que no cuadran
+   - WARNING: Configuraciones atípicas, posibles inconsistencias, bancas no rentables
+   - INFO: Observaciones generales, sugerencias de mejora
+
+4. UBICACIÓN PRECISA:
+   - Especificar siempre: "Hoja: [NOMBRE], Celda: [CELDA]" o "Hoja: [NOMBRE], Fila: [NÚMERO]"
+   - Para errores generales: "Hoja: [NOMBRE], Configuración general"
+
+5. METADATA ESPECÍFICA:
+   - total_findings: Número total de hallazgos
+   - critical_issues: Número de errores con severity "high"
+   - sheets_analyzed: Número de hojas analizadas
+   - non_profitable_bancas: Lista de bancas con balance negativo
+   - possible_config_errors: Lista de hojas con posibles errores de configuración
+
+{f"INSTRUCCIONES ADICIONALES DEL USUARIO: {custom_prompt}" if custom_prompt else ""}
+
+IMPORTANTE: Responde SIEMPRE con un JSON válido en el siguiente formato exacto (sin comentarios ni texto adicional):
+
+{{
+    "success": true,
+    "findings": [
         {{
-            "success": true,
-            "findings": [
-                {{
-                    "type": "error|warning|info",
-                    "title": "Título del hallazgo",
-                    "description": "Descripción detallada",
-                    "location": "Ubicación en el archivo",
-                    "severity": "high|medium|low",
-                    "suggested_fix": "Sugerencia de corrección"
-                }}
-            ],
-            "recommendations": [
-                {{
-                    "title": "Título de recomendación",
-                    "description": "Descripción de la recomendación",
-                    "priority": "high|medium|low",
-                    "category": "calculation|format|process|validation"
-                }}
-            ],
-            "summary": "Resumen ejecutivo del análisis",
-            "metadata": {{
-                "total_findings": 0,
-                "critical_issues": 0,
-                "sheets_analyzed": 0
-            }}
+            "type": "error|warning|info",
+            "title": "Título específico del hallazgo",
+            "description": "Descripción detallada del problema encontrado, incluyendo valores específicos cuando sea posible",
+            "location": "Hoja: [NOMBRE], Celda: [CELDA] o Fila: [NÚMERO]",
+            "severity": "high|medium|low",
+            "suggested_fix": "Sugerencia específica de corrección con pasos claros"
         }}
-        """
+    ],
+    "recommendations": [
+        {{
+            "title": "Título de la recomendación",
+            "description": "Descripción específica de la recomendación con beneficios esperados",
+            "priority": "high|medium|low",
+            "category": "calculation|format|process|validation"
+        }}
+    ],
+    "summary": "Resumen ejecutivo del análisis incluyendo número de problemas críticos encontrados y estado general de las bancas",
+    "metadata": {{
+        "total_findings": 0,
+        "critical_issues": 0,
+        "sheets_analyzed": 0,
+        "non_profitable_bancas": [],
+        "possible_config_errors": []
+    }}
+}}
+
+EJEMPLO DE RESPUESTA ESPERADA:
+{{
+    "success": true,
+    "findings": [
+        {{
+            "type": "error",
+            "title": "Comisión calculada incorrectamente",
+            "description": "La comisión aplicada es del 30% cuando el acuerdo del cliente especifica un 25%. Esto genera un pago excesivo de comisiones por RD$1,500.",
+            "location": "Hoja: MANGOS, Celda: F12",
+            "severity": "high",
+            "suggested_fix": "Cambiar la fórmula en F12 de =B12*0.30 a =B12*0.25, o actualizar el acuerdo si el cambio fue intencional."
+        }}
+    ],
+    "recommendations": [
+        {{
+            "title": "Implementar validación automática de comisiones",
+            "description": "Crear alertas cuando las comisiones aplicadas no coincidan con los acuerdos configurados",
+            "priority": "high",
+            "category": "validation"
+        }}
+    ],
+    "summary": "Análisis completado con X hallazgos encontrados. Se detectaron Y errores críticos que requieren atención inmediata.",
+    "metadata": {{
+        "total_findings": 3,
+        "critical_issues": 2,
+        "sheets_analyzed": 1,
+        "non_profitable_bancas": ["MANGOS"],
+        "possible_config_errors": ["MANGOS"]
+    }}
+}}
+"""
 
         return base_prompt
     
@@ -242,23 +299,30 @@ class OpenAIService:
         try:
             # Create the chat prompt
             prompt = f"""
-            Eres un experto contador y auditor especializado en análisis de cuadres contables.
-            
-            CONTEXTO DEL ANÁLISIS PREVIO:
-            {conversation_context}
-            
-            INSTRUCCIONES:
-            - Responde a la pregunta del usuario basándote en el análisis previo
-            - Sé específico y usa la información del análisis
-            - Si la pregunta no está relacionada con el análisis, redirige al usuario
-            - Mantén un tono profesional pero amigable
-            - Proporciona explicaciones claras y detalladas
-            
-            PREGUNTA DEL USUARIO:
-            {user_message}
-            
-            RESPUESTA:
-            """
+Eres un experto contador y auditor especializado en análisis de cuadres contables de sistemas de lotería.
+
+Tienes acceso completo a:
+- Los datos originales del Excel analizado
+- El análisis completo realizado con todos los hallazgos
+- Las recomendaciones específicas
+- El historial de conversación previa
+
+CONTEXTO COMPLETO DEL ANÁLISIS:
+{conversation_context}
+
+INSTRUCCIONES PARA RESPONDER:
+- Responde basándote en los datos del Excel Y el análisis realizado
+- Proporciona información específica: valores exactos, ubicaciones de celdas, cálculos precisos
+- Si la pregunta requiere cálculos, utiliza los datos disponibles para realizarlos
+- Cita ubicaciones específicas (hoja, celda, fila) cuando sea relevante
+- Mantén un tono profesional pero accesible
+- Si no tienes la información exacta, explica qué necesitarías para responder mejor
+
+PREGUNTA DEL USUARIO:
+{user_message}
+
+RESPUESTA:
+"""
             
             # Make the API call
             response = self.client.chat.completions.create(

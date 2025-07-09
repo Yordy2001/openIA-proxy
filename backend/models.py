@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 from pydantic import BaseModel
 
 
@@ -24,21 +24,58 @@ class Recommendation(BaseModel):
 
 class AnalysisResponse(BaseModel):
     """Model for analysis response"""
-    success: bool = True
+    success: bool
     summary: str
     findings: List[Finding]
     recommendations: List[Recommendation]
+    metadata: Dict[str, Any]
     error: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
-    session_id: Optional[str] = None  # Add session_id for chat context
-
-
-class AnalysisRequest(BaseModel):
-    """Model for analysis request"""
-    prompt: Optional[str] = None
+    session_id: Optional[str] = None
 
 
 class ErrorResponse(BaseModel):
     """Model for error responses"""
     error: str
-    detail: Optional[str] = None 
+    detail: Optional[str] = None
+    status_code: int = 500
+
+
+# Nuevos modelos para tabla editable
+class ExcelCellData(BaseModel):
+    """Model for individual cell data"""
+    value: Union[str, int, float, None]
+    type: str  # "text", "number", "date", "formula"
+    editable: bool = True
+    row: int
+    column: int
+    column_name: str
+
+
+class ExcelSheetData(BaseModel):
+    """Model for sheet data"""
+    sheet_name: str
+    columns: List[str]
+    rows: List[Dict[str, Union[str, int, float, None]]]
+    shape: List[int]  # [rows, columns]
+    numeric_columns: List[str]
+
+
+class ExcelStructuredData(BaseModel):
+    """Model for structured Excel data"""
+    filename: str
+    sheets: List[ExcelSheetData]
+    metadata: Dict[str, Any]
+
+
+class EditCellRequest(BaseModel):
+    """Model for editing cell data"""
+    sheet_name: str
+    row: int
+    column: str
+    value: Union[str, int, float, None]
+
+
+class DownloadRequest(BaseModel):
+    """Model for download request"""
+    filename: str
+    sheets: List[ExcelSheetData] 
