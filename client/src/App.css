@@ -1,468 +1,551 @@
-.App {
-  text-align: center;
-  min-height: 100vh;
+/* App.css - Estilos principales */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   background-color: #f5f5f5;
 }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-  background-color: white;
+.App {
   min-height: 100vh;
-  box-shadow: 0 0 20px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
 }
 
-.header {
-  text-align: center;
-  margin-bottom: 30px;
-  padding: 20px;
+.App-header {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  padding: 2rem 0;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
-.header h1 {
-  margin: 0 0 10px 0;
+.App-header h1 {
   font-size: 2.5rem;
-  font-weight: 700;
+  margin-bottom: 0.5rem;
 }
 
-.header p {
-  margin: 0;
-  font-size: 1.1rem;
+.App-header p {
+  font-size: 1.2rem;
   opacity: 0.9;
 }
 
-.server-status {
-  margin: 10px 0;
-  padding: 10px;
-  border-radius: 4px;
-  font-size: 14px;
-}
-
-.server-status.healthy {
-  background-color: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
-}
-
-.server-status.error {
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-}
-
-.server-status.degraded {
-  background-color: #fff3cd;
-  color: #856404;
-  border: 1px solid #ffeaa7;
-}
-
-.spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #3498db;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 20px;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.drag-over {
-  background-color: #e3f2fd !important;
-  border-color: #2196f3 !important;
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
-  .container {
-    padding: 10px;
-  }
-  
-  .upload-section {
-    padding: 20px;
-  }
-  
-  .results {
-    padding: 20px;
-  }
-  
-  .header h1 {
-    font-size: 24px;
-  }
-}
-
-/* Mejoras para accesibilidad */
-.button:focus {
-  outline: 2px solid #007bff;
-  outline-offset: 2px;
-}
-
-.file-input:focus-within {
-  outline: 2px solid #007bff;
-  outline-offset: 2px;
-}
-
-/* Animaciones suaves */
-.results {
-  animation: fadeIn 0.5s ease-in;
-}
-
-.finding {
-  animation: slideIn 0.3s ease-out;
-}
-
-.recommendation {
-  animation: slideIn 0.3s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-/* Estilos para la lista de archivos */
-.file-list {
-  max-height: 150px;
-  overflow-y: auto;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 10px;
-  background-color: #f8f9fa;
-}
-
-.file-list ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.file-list li {
-  padding: 5px 0;
-  border-bottom: 1px solid #eee;
-}
-
-/* Estilos para las pestañas */
-.tabs {
-  display: flex;
-  margin: 20px 0;
-  border-bottom: 2px solid #dee2e6;
-  justify-content: center;
-}
-
-.tab-button {
-  background: none;
-  border: none;
-  padding: 12px 24px;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 500;
-  color: #666;
-  border-bottom: 3px solid transparent;
-  transition: all 0.3s ease;
-  margin: 0 10px;
-}
-
-.tab-button:hover {
-  color: #007bff;
-  background-color: #f8f9fa;
-}
-
-.tab-button.active {
-  color: #007bff;
-  border-bottom-color: #007bff;
-  background-color: #f8f9fa;
-}
-
-.tab-content {
-  margin-top: 20px;
-}
-
-.tab-pane {
-  animation: fadeIn 0.3s ease-in;
-}
-
-/* Estilos para el extractor de Excel */
-.excel-extractor {
+.App-main {
+  flex: 1;
+  padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  width: 100%;
 }
 
-.extractor-header {
-  text-align: center;
-  margin-bottom: 30px;
+.error-message {
+  background: #fee;
+  border: 1px solid #fcc;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+  color: #c33;
 }
 
-.extractor-header h2 {
+.error-message h3 {
+  margin-bottom: 0.5rem;
+}
+
+/* FileUpload Styles */
+.file-upload {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.file-upload__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.file-upload__prompt {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.file-upload__prompt label {
+  font-weight: 600;
   color: #333;
-  margin-bottom: 10px;
 }
 
-.extractor-header p {
-  color: #666;
-  font-size: 16px;
+.file-upload__prompt textarea {
+  padding: 0.75rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  resize: vertical;
+  min-height: 80px;
 }
 
-/* Estilos para la tabla Excel */
-.excel-table {
-  margin-top: 20px;
+.file-upload__prompt textarea:focus {
+  outline: none;
+  border-color: #667eea;
 }
 
-.excel-header {
+.file-upload__area {
+  border: 2px dashed #cbd5e0;
+  border-radius: 12px;
+  padding: 3rem 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  background: #f8fafc;
+}
+
+.file-upload__area:hover {
+  border-color: #667eea;
+  background: #f1f5f9;
+}
+
+.file-upload__area--active {
+  border-color: #667eea;
+  background: #e0e7ff;
+  transform: scale(1.02);
+}
+
+.file-upload__icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.file-upload__text {
+  font-size: 1.1rem;
+  color: #4a5568;
+  margin-bottom: 0.5rem;
+}
+
+.file-upload__subtext {
+  color: #718096;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.file-upload__button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 200px;
+}
+
+.file-upload__button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.file-upload__button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Results Display Styles */
+.results-display {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.results-display__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding: 20px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  border-left: 4px solid #007bff;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e2e8f0;
 }
 
-.excel-header h3 {
-  margin: 0;
-  color: #333;
-}
-
-.excel-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.sheet-tabs {
-  display: flex;
-  margin-bottom: 20px;
-  border-bottom: 2px solid #dee2e6;
-  overflow-x: auto;
-}
-
-.sheet-tab {
-  background: none;
-  border: none;
-  padding: 12px 20px;
-  cursor: pointer;
-  font-size: 14px;
-  color: #666;
-  border-bottom: 3px solid transparent;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-}
-
-.sheet-tab:hover {
-  color: #007bff;
-  background-color: #f8f9fa;
-}
-
-.sheet-tab.active {
-  color: #007bff;
-  border-bottom-color: #007bff;
-  background-color: #f8f9fa;
-}
-
-.sheet-info {
-  margin-bottom: 20px;
-  padding: 15px;
-  background-color: #e3f2fd;
-  border-radius: 8px;
-  border-left: 4px solid #2196f3;
-}
-
-.sheet-info h4 {
-  margin: 0 0 10px 0;
-  color: #1976d2;
-}
-
-.sheet-info p {
-  margin: 0;
-  color: #666;
-}
-
-.table-container {
-  overflow-x: auto;
-  margin-bottom: 20px;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.excel-data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-  background-color: white;
-}
-
-.excel-data-table th {
-  background-color: #f8f9fa;
-  padding: 12px 8px;
-  text-align: left;
-  font-weight: 600;
-  color: #333;
-  border-bottom: 2px solid #dee2e6;
-  border-right: 1px solid #dee2e6;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.excel-data-table td {
-  border-bottom: 1px solid #dee2e6;
-  border-right: 1px solid #dee2e6;
-  vertical-align: top;
-}
-
-.excel-data-table tr:hover {
-  background-color: #f8f9fa;
-}
-
-.excel-data-table tbody tr:nth-child(even) {
-  background-color: #fafafa;
-}
-
-.excel-data-table tbody tr:nth-child(even):hover {
-  background-color: #f0f0f0;
-}
-
-.table-instructions {
-  margin-top: 20px;
-  padding: 20px;
-  background-color: #fff3cd;
-  border-radius: 8px;
-  border-left: 4px solid #ffc107;
-}
-
-.table-instructions p {
-  margin: 0 0 10px 0;
-  color: #856404;
-  font-weight: 600;
-}
-
-.table-instructions ul {
-  margin: 0;
-  padding-left: 20px;
-  color: #856404;
-}
-
-.table-instructions li {
-  margin-bottom: 5px;
-}
-
-/* Estilos para el botón */
-.button {
-  background-color: #007bff;
+.results-display__chat-button {
+  background: #48bb78;
   color: white;
   border: none;
-  padding: 10px 20px;
-  font-size: 14px;
-  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
-  text-decoration: none;
-  display: inline-block;
+  font-weight: 500;
+  transition: all 0.3s ease;
 }
 
-.button:hover {
-  background-color: #0056b3;
+.results-display__chat-button:hover {
+  background: #38a169;
 }
 
-.button:disabled {
-  background-color: #6c757d;
+.results-display__chat-button.active {
+  background: #2d3748;
+}
+
+.results-display__metadata {
+  background: #f7fafc;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid #667eea;
+}
+
+.results-display__metadata p {
+  margin: 0.25rem 0;
+  color: #4a5568;
+}
+
+.results-display__summary {
+  margin-bottom: 2rem;
+}
+
+.results-display__summary h3 {
+  color: #2d3748;
+  margin-bottom: 0.75rem;
+  font-size: 1.3rem;
+}
+
+.results-display__summary p {
+  color: #4a5568;
+  line-height: 1.6;
+  font-size: 1.05rem;
+}
+
+.results-display__findings,
+.results-display__recommendations {
+  margin-bottom: 2rem;
+}
+
+.results-display__findings h3,
+.results-display__recommendations h3 {
+  color: #2d3748;
+  margin-bottom: 1rem;
+  font-size: 1.3rem;
+}
+
+.findings-list,
+.recommendations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.finding-item,
+.recommendation-item {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.25rem;
+  transition: all 0.3s ease;
+}
+
+.finding-item:hover,
+.recommendation-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.finding-header,
+.recommendation-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.finding-icon,
+.recommendation-icon {
+  font-size: 1.2rem;
+}
+
+.finding-severity,
+.recommendation-priority {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.finding-location {
+  color: #718096;
+  font-size: 0.9rem;
+  margin-left: auto;
+}
+
+.finding-description,
+.recommendation-description {
+  color: #4a5568;
+  line-height: 1.5;
+  margin-bottom: 0.5rem;
+}
+
+.finding-amount,
+.recommendation-action {
+  color: #2d3748;
+  font-size: 0.95rem;
+  margin-top: 0.5rem;
+}
+
+/* Severity specific styles */
+.severity-high {
+  border-left: 4px solid #f56565;
+}
+
+.severity-high .finding-severity {
+  background: #fed7d7;
+  color: #c53030;
+}
+
+.severity-medium {
+  border-left: 4px solid #ed8936;
+}
+
+.severity-medium .finding-severity {
+  background: #feebc8;
+  color: #c05621;
+}
+
+.severity-low {
+  border-left: 4px solid #48bb78;
+}
+
+.severity-low .finding-severity {
+  background: #c6f6d5;
+  color: #276749;
+}
+
+.severity-default {
+  border-left: 4px solid #4299e1;
+}
+
+.severity-default .finding-severity {
+  background: #bee3f8;
+  color: #2b6cb0;
+}
+
+/* Chat Component Styles */
+.chat-component {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  height: 500px;
+  margin-bottom: 2rem;
+}
+
+.chat-component__header {
+  padding: 1rem 1.5rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  border-radius: 12px 12px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chat-component__header h3 {
+  margin: 0;
+  color: #2d3748;
+}
+
+.chat-component__close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.chat-component__close:hover {
+  background: #e2e8f0;
+}
+
+.chat-component__messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.chat-component__welcome {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 1.5rem;
+  color: #0369a1;
+}
+
+.chat-component__suggestions {
+  margin-top: 1rem;
+}
+
+.chat-component__suggestions ul {
+  margin-left: 1rem;
+  margin-top: 0.5rem;
+}
+
+.chat-component__suggestions li {
+  margin: 0.25rem 0;
+  font-style: italic;
+}
+
+.chat-message {
+  display: flex;
+  flex-direction: column;
+  max-width: 80%;
+}
+
+.chat-message--user {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.chat-message--assistant {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.chat-message--error {
+  align-self: center;
+  align-items: center;
+  max-width: 100%;
+}
+
+.chat-message__content {
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  word-wrap: break-word;
+}
+
+.chat-message--user .chat-message__content {
+  background: #667eea;
+  color: white;
+}
+
+.chat-message--assistant .chat-message__content {
+  background: #f1f5f9;
+  color: #2d3748;
+}
+
+.chat-message--error .chat-message__content {
+  background: #fee;
+  color: #c33;
+  border: 1px solid #fcc;
+}
+
+.chat-message__timestamp {
+  font-size: 0.75rem;
+  color: #718096;
+  margin-top: 0.25rem;
+}
+
+.chat-message__loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-style: italic;
+}
+
+.chat-component__form {
+  padding: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.chat-component__input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.chat-component__input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.chat-component__input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.chat-component__send-button {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  min-width: 50px;
+}
+
+.chat-component__send-button:hover:not(:disabled) {
+  background: #5a67d8;
+}
+
+.chat-component__send-button:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
-/* Estilos para el área de subida de archivos */
-.upload-section {
-  margin: 20px 0;
-  padding: 20px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-}
-
-.file-input {
-  border: 2px dashed #dee2e6;
-  border-radius: 8px;
-  padding: 20px;
-  text-align: center;
-  transition: all 0.3s ease;
-  background-color: white;
-}
-
-.file-input:hover {
-  border-color: #007bff;
-  background-color: #f8f9fa;
-}
-
-.textarea {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
-  font-size: 14px;
-  resize: vertical;
-  min-height: 100px;
-}
-
-.textarea:focus {
-  outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
-}
-
-/* Responsive design para la tabla */
+/* Responsive Design */
 @media (max-width: 768px) {
-  .excel-header {
+  .App-header h1 {
+    font-size: 2rem;
+  }
+  
+  .App-header p {
+    font-size: 1rem;
+  }
+  
+  .App-main {
+    padding: 1rem;
+  }
+  
+  .file-upload,
+  .results-display {
+    padding: 1.5rem;
+  }
+  
+  .file-upload__area {
+    padding: 2rem 1rem;
+  }
+  
+  .results-display__header {
     flex-direction: column;
-    gap: 15px;
+    gap: 1rem;
+    align-items: flex-start;
   }
   
-  .excel-actions {
-    width: 100%;
-    justify-content: center;
+  .chat-component {
+    height: 400px;
   }
   
-  .sheet-tabs {
-    justify-content: flex-start;
+  .chat-message {
+    max-width: 95%;
   }
-  
-  .excel-data-table {
-    font-size: 12px;
-  }
-  
-  .excel-data-table th,
-  .excel-data-table td {
-    padding: 8px 4px;
-  }
-  
-  .tabs {
-    flex-direction: column;
-  }
-  
-  .tab-button {
-    margin: 5px 0;
-  }
-}
+} 
